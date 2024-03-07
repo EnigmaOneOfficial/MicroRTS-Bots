@@ -1,6 +1,6 @@
 package AdvancedRush;
 
-import ai.abstraction.AbstractionLayerAI;
+import CustomUnitClasses.AbstractionLayerAI;
 import ai.abstraction.pathfinding.AStarPathFinding;
 import ai.abstraction.pathfinding.PathFinding;
 import ai.core.AI;
