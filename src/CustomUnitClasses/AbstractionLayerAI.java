@@ -4,6 +4,12 @@
  */
 package CustomUnitClasses;
 
+import ai.abstraction.AbstractAction;
+import ai.abstraction.Attack;
+import ai.abstraction.Build;
+import ai.abstraction.Harvest;
+import ai.abstraction.Idle;
+import ai.abstraction.Move;
 import ai.abstraction.pathfinding.PathFinding;
 import ai.core.AIWithComputationBudget;
 import java.util.ArrayList;
@@ -72,27 +78,27 @@ public abstract class AbstractionLayerAI extends AIWithComputationBudget {
         List<Unit> toDelete = new ArrayList<>();
         ResourceUsage ru = new ResourceUsage();
         for (AbstractAction aa : actions.values()) {
-            if (!pgs.getUnits().contains(aa.unit)) {
+            if (!pgs.getUnits().contains(aa.getUnit())) {
                 // The unit is dead:
-                toDelete.add(aa.unit);
+                toDelete.add(aa.getUnit());
             } else {
                 if (aa.completed(gs)) {
                     // the action is complete:
-                    toDelete.add(aa.unit);
+                    toDelete.add(aa.getUnit());
                 } else {
-                    if (gs.getActionAssignment(aa.unit) == null) {
+                    if (gs.getActionAssignment(aa.getUnit()) == null) {
                         UnitAction ua = aa.execute(gs, ru);
                         if (ua != null) {
                             if (VERIFY_ACTION_CORRECTNESS) {
                                 // verify that the action is actually feasible:
-                                List<UnitAction> ual = aa.unit.getUnitActions(gs);
+                                List<UnitAction> ual = aa.getUnit().getUnitActions(gs);
                                 if (ual.contains(ua)) {
-                                    desires.add(new Pair<>(aa.unit, ua));
+                                    desires.add(new Pair<>(aa.getUnit(), ua));
                                 }
                             } else {
-                                desires.add(new Pair<>(aa.unit, ua));
+                                desires.add(new Pair<>(aa.getUnit(), ua));
                             }
-                            ru.merge(ua.resourceUsage(aa.unit, pgs));
+                            ru.merge(ua.resourceUsage(aa.getUnit(), pgs));
                         }
 
                     }
@@ -239,7 +245,7 @@ public abstract class AbstractionLayerAI extends AIWithComputationBudget {
             List<Integer> reservedPositions, Player p, PhysicalGameState pgs) {
         AbstractAction action = getAbstractAction(u);
         // System.out.println("buildIfNotAlreadyBuilding: action = " + action);
-        if (!(action instanceof Build) || ((Build) action).type != type) {
+        if (!(action instanceof Build) || ((Build) action).getUnit().getType() != type) {
             int pos = findBuildingPosition(reservedPositions, desiredX, desiredY, p, pgs);
 
             // System.out.println("pos = " + (pos % pgs.getWidth()) + "," + (pos /

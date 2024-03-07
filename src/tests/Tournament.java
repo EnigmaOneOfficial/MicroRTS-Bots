@@ -14,7 +14,6 @@ import rts.units.UnitTypeTable;
 import javax.swing.*;
 
 import MicroBot.MicroBot;
-import ObiBotKenobi.ObiBotKenobi;
 
 import java.util.*;
 import java.util.stream.Collectors;

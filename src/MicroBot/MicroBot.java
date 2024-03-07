@@ -57,6 +57,7 @@ public class MicroBot extends AbstractionLayerAI {
                             : player.getResources() >= WORKER.cost;
 
             if (shouldTrain && defenders.size() == 0) {
+                
                 train(base, WORKER);
                 return;
             }

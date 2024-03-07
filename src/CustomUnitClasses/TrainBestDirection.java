@@ -46,7 +46,6 @@ public class TrainBestDirection extends AbstractAction {
         List<Unit> enemyBase = new ArrayList<>();
         List<Unit> ownBase = new ArrayList<>();
 
-        // Set enemyBase and ownBase
         for (Unit u : pgs.getUnits()) {
             if (u.getType().name == "Base") {
                 if (u.getPlayer() == unit.getPlayer()) {
@@ -58,15 +57,13 @@ public class TrainBestDirection extends AbstractAction {
         }
 
         if (enemyBase.isEmpty() || ownBase.isEmpty()) {
-            return null; // Return null if no enemy base is found
+            return null;
         }
         int enemyBaseX = enemyBase.get(0).getX();
         int enemyBaseY = enemyBase.get(0).getY();
 
         int bestDirection = -1;
-        int bestScore = Integer.MIN_VALUE; // Initialize with min value to ensure any score is better
-
-        // Directions mapped to their deltas (dx, dy)
+        int bestScore = Integer.MIN_VALUE;
         int[][] directions = new int[][] { { 0, -1, UnitAction.DIRECTION_UP }, { 1, 0, UnitAction.DIRECTION_RIGHT },
                 { 0, 1, UnitAction.DIRECTION_DOWN }, { -1, 0, UnitAction.DIRECTION_LEFT } };
 
@@ -82,7 +79,7 @@ public class TrainBestDirection extends AbstractAction {
             }
         }
 
-        completed = true; // Assuming this is a flag indicating the action has been decided
+        completed = true;
 
         if (bestDirection != -1) {
             UnitAction ua = new UnitAction(UnitAction.TYPE_PRODUCE, bestDirection, type);
@@ -90,22 +87,16 @@ public class TrainBestDirection extends AbstractAction {
                 return ua;
         }
 
-        return null; // Return null if no valid direction is found
+        return null; 
     }
 
     public int score(int x, int y, UnitType type, int player, PhysicalGameState pgs, int enemyBaseX, int enemyBaseY,
             Unit ownBase) {
         int score = 0;
-
-        // Distance to enemy base
         int distanceToEnemyBase = Math.abs(enemyBaseX - x) + Math.abs(enemyBaseY - y);
-        score -= distanceToEnemyBase; // Lower distance increases score
-
-        // Distance to own base (the further, the better)
+        score -= distanceToEnemyBase;
         int distanceToOwnBase = Math.abs(ownBase.getX() - x) + Math.abs(ownBase.getY() - y);
-        score += 2 * distanceToOwnBase; // Increase score significantly based on distance from own base
-
-        // Adjust scoring based on other units/resources if needed...
+        score += 2 * distanceToOwnBase; 
 
         return score;
     }
