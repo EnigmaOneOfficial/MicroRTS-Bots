@@ -17,12 +17,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import CustomUnitClasses.TrainBestDirection;
 import rts.*;
 import rts.units.Unit;
 import rts.units.UnitType;
 import util.Pair;
-import ai.coac.TrainDirection;
 
 /**
  *

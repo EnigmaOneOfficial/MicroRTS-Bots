@@ -2,8 +2,7 @@ package tests;
 
 import ai.PassiveAI;
 import ai.RandomBiasedAI;
-import ai.abstraction.WorkerRush;
-import ai.coac.CoacAI;
+import ai.abstraction.WorkerDefense;
 import ai.core.AI;
 import gui.PhysicalGameStatePanel;
 import mayariBot.mayari;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class Tournament {
 
-    private static final String MAP_PATH = "maps/24x24/basesWorkers24x24.xml"; // Path to the map file
+    private static final String MAP_PATH = "maps/16x16/basesWorkers16x16.xml"; // Path to the map file
     private static final int MAX_CYCLES = 5000; // Maximum number of cycles before the game ends
     private static final int UPDATE_PERIOD = 10; // Time in milliseconds between game cycles
     private static final int WINDOW_SIZE = 1000; // Size of the game window
@@ -28,7 +27,7 @@ public class Tournament {
     private static final boolean CHECK_FOR_ADVANTAGE = true; // Check for player 1 advantage
     private static final int MAX_DURATION_PER_MATCHUP = 15000; // Time in milliseconds the tournament can runs
     private static final boolean VISUALIZE = true; // Start the game with GUI
-    private static final int SIMULATIONS = 10000; // Number of simulations to run
+    private static final int SIMULATIONS = 1; // Number of simulations to run
 
     private static void getTournamentPlayers() {
         // players.add(new PassiveAI(utt));

@@ -114,7 +114,6 @@ public class MicroBot extends AbstractionLayerAI {
             if (enemy == null)
                 return;
 
-            // Attack enemy if its close or enemy base is null
             boolean shouldPrioritizeAttack = (distance(worker,
                     enemy) <= (!isHarvester ? (worker.getAttackRange() + 3) : worker.getAttackRange())
                     || (enemyBase == null && !isHarvester)) || base == null;
@@ -126,7 +125,6 @@ public class MicroBot extends AbstractionLayerAI {
                 return;
             }
 
-            // Return resources to base
             if (worker.getResources() > 0) {
                 harvest(worker, resource, base);
                 return;
@@ -141,7 +139,6 @@ public class MicroBot extends AbstractionLayerAI {
                 harvestersNeeded = 2;
             }
 
-            // Build a barracks
             Unit enemyWithinHalfOfMap = findClosestWithin(_units, worker,
                     (int) Math.floor(Math.sqrt(board.getWidth() * board.getHeight()) / 2));
             boolean canBuildBarracks = (player.getResources() >= BARRACKS.cost + WORKER.cost && enemyBase != null
@@ -158,7 +155,6 @@ public class MicroBot extends AbstractionLayerAI {
                 buildX = Math.max(0, Math.min(buildX, board.getWidth() - 1));
                 buildY = Math.max(0, Math.min(buildY, board.getHeight() - 1));
 
-                // check if this is the worker closest to the build spot
                 double minDist = Double.MAX_VALUE;
                 Unit closestWorker = null;
                 for (Unit u : workers) {
@@ -180,7 +176,6 @@ public class MicroBot extends AbstractionLayerAI {
                 }
             }
 
-            // Harvest resources
             boolean canHarvest = resource != null || worker.getResources() > 0;
             boolean shouldHarvest = harvesters.size() < harvestersNeeded;
 
@@ -256,16 +251,12 @@ public class MicroBot extends AbstractionLayerAI {
             List<Unit> enemiesWithinAttackRange = findUnitsWithin(_units, ranged, ranged.getAttackRange());
             List<Unit> enemiesWithinReducedAttackRange = findUnitsWithin(_units, ranged, ranged.getAttackRange() - 1);
 
-            // This now includes enemies right at the edge of the attack range.
             List<Unit> enemiesAtMaxAttackRange = new ArrayList<>();
             for (Unit enemy : enemiesWithinAttackRange) {
                 if (!enemiesWithinReducedAttackRange.contains(enemy)) {
                     enemiesAtMaxAttackRange.add(enemy);
                 }
             }
-
-            // Prioritize attacking enemies within reduced range, then at max range, else
-            // retreat or march.
             if (!enemiesWithinReducedAttackRange.isEmpty()) {
                 retreatOrAttack(ranged, enemiesWithinReducedAttackRange, enemiesWithinAttackRange);
             } else if (!enemiesAtMaxAttackRange.isEmpty()) {
@@ -277,15 +268,11 @@ public class MicroBot extends AbstractionLayerAI {
 
         private void retreatOrAttack(Unit ranged, List<Unit> enemiesWithinReducedAttackRange,
                 List<Unit> enemiesWithinAttackRange) {
-            List<Point> possibleRetreats = calculateRetreatPositions(ranged, enemiesWithinAttackRange); // Consider all
-                                                                                                        // enemies for
-                                                                                                        // retreat.
-            Point bestRetreat = chooseBestRetreat(possibleRetreats, enemiesWithinAttackRange); // Decision based on all
-                                                                                               // enemies.
+            List<Point> possibleRetreats = calculateRetreatPositions(ranged, enemiesWithinAttackRange);
+            Point bestRetreat = chooseBestRetreat(possibleRetreats, enemiesWithinAttackRange);
             if (bestRetreat != null) {
                 move(ranged, bestRetreat.x, bestRetreat.y);
             } else {
-                // Ensure there's a feasible target before deciding to attack.
                 Unit target = findClosest(enemiesWithinAttackRange, ranged);
                 if (target != null) {
                     attack(ranged, target);
@@ -345,10 +332,6 @@ public class MicroBot extends AbstractionLayerAI {
         return units.stream().min(Comparator.comparingInt(u -> distance(u, reference))).orElse(null);
     }
 
-    private Unit findFurthest(List<Unit> units, Unit reference) {
-        return units.stream().max(Comparator.comparingInt(u -> distance(u, reference))).orElse(null);
-    }
-
     private Unit findClosestWithin(List<Unit> units, Unit reference, int distance) {
         return findUnitsWithin(units, reference, distance).stream()
                 .min(Comparator.comparingInt(u -> distance(u, reference)))
@@ -386,10 +369,6 @@ public class MicroBot extends AbstractionLayerAI {
         return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     }
 
-    private int distance(Point p1, Point p2) {
-        return (int) Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-    }
-
     @Override
     public PlayerAction getAction(int player, GameState game) {
         setActionState(player, game);
@@ -402,62 +381,37 @@ public class MicroBot extends AbstractionLayerAI {
         return translateActions(player, game);
     }
 
-    public void setActionState(int player, GameState game) {
-        this.player = game.getPlayer(player);
-        this.game = game;
-        board = game.getPhysicalGameState();
+@SuppressWarnings("unchecked")
+public void setActionState(int player, GameState game) {
+    this.player = game.getPlayer(player);
+    this.game = game;
+    board = game.getPhysicalGameState();
 
-        resetUnits();
-        for (Unit unit : board.getUnits()) {
-            if (unit.getPlayer() == player) {
-                units.add(unit);
-                switch (unit.getType().name) {
-                    case "Base":
-                        bases.add(unit);
-                        break;
-                    case "Barracks":
-                        barracks.add(unit);
-                        break;
-                    case "Worker":
-                        workers.add(unit);
-                        break;
-                    case "Light":
-                        light.add(unit);
-                        break;
-                    case "Heavy":
-                        heavy.add(unit);
-                        break;
-                    case "Ranged":
-                        ranged.add(unit);
-                        break;
-                }
-            } else if (unit.getPlayer() >= 0) {
-                _units.add(unit);
-                switch (unit.getType().name) {
-                    case "Base":
-                        _bases.add(unit);
-                        break;
-                    case "Barracks":
-                        _barracks.add(unit);
-                        break;
-                    case "Worker":
-                        _workers.add(unit);
-                        break;
-                    case "Light":
-                        _light.add(unit);
-                        break;
-                    case "Heavy":
-                        _heavy.add(unit);
-                        break;
-                    case "Ranged":
-                        _ranged.add(unit);
-                        break;
-                }
-            } else {
-                resources.add(unit);
-            }
+    resetUnits();
+    for (Unit unit : board.getUnits()) {
+        if (unit.getPlayer() == player) {
+            addUnitToLists(unit, units, bases, barracks, workers, light, heavy, ranged);
+        } else if (unit.getPlayer() >= 0) {
+            addUnitToLists(unit, _units, _bases, _barracks, _workers, _light, _heavy, _ranged);
+        } else {
+            resources.add(unit);
         }
     }
+}
+
+@SuppressWarnings("unchecked")
+private void addUnitToLists(Unit unit, List<Unit>... lists) {
+    lists[0].add(unit);
+    switch (unit.getType().name) {
+        case "Base"     -> lists[1].add(unit);
+        case "Barracks" -> lists[2].add(unit);
+        case "Worker"   -> lists[3].add(unit);
+        case "Light"    -> lists[4].add(unit);
+        case "Heavy"    -> lists[5].add(unit);
+        case "Ranged"   -> lists[6].add(unit);
+    }
+}
+
 
     public MicroBot(UnitTypeTable unitTypeTable) {
         this(unitTypeTable, new AStarPathFinding());
