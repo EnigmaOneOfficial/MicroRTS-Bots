@@ -2,8 +2,6 @@ package CustomUnitClasses;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalInt;
-import java.util.stream.Stream;
 
 import ai.abstraction.AbstractAction;
 import rts.GameState;
@@ -45,7 +43,6 @@ public class TrainBestDirection extends AbstractAction {
         PhysicalGameState pgs = gs.getPhysicalGameState();
         List<Unit> enemyBase = new ArrayList<>();
         List<Unit> ownBase = new ArrayList<>();
-
         for (Unit u : pgs.getUnits()) {
             if (u.getType().name.equals("Base")) {
                 if (u.getPlayer() == unit.getPlayer()) {
@@ -55,46 +52,50 @@ public class TrainBestDirection extends AbstractAction {
                 }
             }
         }
-
-        if (enemyBase.isEmpty() || ownBase.isEmpty()) {
-            return null;
+        int enemyBaseX = -1;
+        int enemyBaseY = -1;
+        if (!enemyBase.isEmpty()) {
+            enemyBaseX = enemyBase.get(0).getX();
+            enemyBaseY = enemyBase.get(0).getY();
         }
-
-        int enemyBaseX = enemyBase.get(0).getX();
-        int enemyBaseY = enemyBase.get(0).getY();
-
-        int bestDirection = -1;
-        int bestScore = Integer.MIN_VALUE;
+        Unit ownBaseUnit = null;
+        if (!ownBase.isEmpty()) {
+            ownBaseUnit = ownBase.get(0);
+        }
         int[][] directions = new int[][] {
                 { 0, -1, UnitAction.DIRECTION_UP },
                 { 1, 0, UnitAction.DIRECTION_RIGHT },
                 { 0, 1, UnitAction.DIRECTION_DOWN },
                 { -1, 0, UnitAction.DIRECTION_LEFT }
         };
-
-        for (int[] dir : directions) {
-            int newX = unit.getX() + dir[0];
-            int newY = unit.getY() + dir[1];
-
-            if (isValidTrainDirection(gs, newX, newY)) {
-                int score = score(newX, newY, type, unit.getPlayer(), pgs, enemyBaseX, enemyBaseY, ownBase.get(0));
-                if (score > bestScore || bestDirection == -1) {
-                    bestScore = score;
-                    bestDirection = dir[2];
-                }
-            }
-        }
-
+        int[] bestDirection = findBestAvailableDirection(gs, directions, enemyBaseX, enemyBaseY, ownBaseUnit);
         completed = true;
-
-        if (bestDirection != -1) {
-            UnitAction ua = new UnitAction(UnitAction.TYPE_PRODUCE, bestDirection, type);
+        if (bestDirection != null) {
+            UnitAction ua = new UnitAction(UnitAction.TYPE_PRODUCE, bestDirection[2], type);
             if (gs.isUnitActionAllowed(unit, ua)) {
                 return ua;
             }
         }
-
         return null;
+    }
+
+    private int[] findBestAvailableDirection(GameState gs, int[][] directions, int enemyBaseX, int enemyBaseY,
+            Unit ownBase) {
+        int bestScore = Integer.MIN_VALUE;
+        int[] bestDirection = null;
+        for (int[] dir : directions) {
+            int newX = unit.getX() + dir[0];
+            int newY = unit.getY() + dir[1];
+            if (isValidTrainDirection(gs, newX, newY)) {
+                int score = score(newX, newY, type, unit.getPlayer(), gs.getPhysicalGameState(), enemyBaseX, enemyBaseY,
+                        ownBase);
+                if (score > bestScore || bestDirection == null) {
+                    bestScore = score;
+                    bestDirection = dir;
+                }
+            }
+        }
+        return bestDirection;
     }
 
     private boolean isValidTrainDirection(GameState gs, int x, int y) {
@@ -105,12 +106,14 @@ public class TrainBestDirection extends AbstractAction {
     public int score(int x, int y, UnitType type, int player, PhysicalGameState pgs, int enemyBaseX, int enemyBaseY,
             Unit ownBase) {
         int score = 0;
-        int distanceToEnemyBase = Math.abs(enemyBaseX - x) + Math.abs(enemyBaseY - y);
-        score -= 1.5 * distanceToEnemyBase;
-        int distanceToOwnBase = Math.abs(ownBase.getX() - x) + Math.abs(ownBase.getY() - y);
-        score += distanceToOwnBase;
-
+        if (enemyBaseX != -1 && enemyBaseY != -1) {
+            int distanceToEnemyBase = Math.abs(enemyBaseX - x) + Math.abs(enemyBaseY - y);
+            score -= distanceToEnemyBase;
+        }
+        if (ownBase != null) {
+            int distanceToOwnBase = Math.abs(ownBase.getX() - x) + Math.abs(ownBase.getY() - y);
+            score += 2 * distanceToOwnBase;
+        }
         return score;
     }
-
 }

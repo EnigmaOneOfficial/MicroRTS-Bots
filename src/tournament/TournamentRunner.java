@@ -6,20 +6,13 @@ import ai.core.AI;
 import rts.units.UnitTypeTable;
 
 public class TournamentRunner {
-    private static final String MAP_PATH = "maps/16x16/basesWorkers16x16.xml";
-    private static final int MAX_CYCLES = 5000;
-    private static final int UPDATE_PERIOD = 10;
-    private static final int WINDOW_SIZE = 1000;
-    private static final boolean DISPOSE_WINDOW = true;
-    private static final boolean CHECK_FOR_ADVANTAGE = true;
-    private static final int MAX_DURATION_PER_MATCHUP = 30000;
-    private static final boolean VISUALIZE = false;
-    private static final int SIMULATIONS = 10;
 
     private static List<AI> players = new ArrayList<>();
     private static UnitTypeTable utt = new UnitTypeTable();
 
-    public static void runTournament() {
+    public static void runTournament(String MAP_PATH, int MAX_CYCLES, int UPDATE_PERIOD, int WINDOW_SIZE,
+            boolean DISPOSE_WINDOW, boolean CHECK_FOR_ADVANTAGE, int MAX_DURATION_PER_MATCHUP, boolean VISUALIZE,
+            int SIMULATIONS) {
         try {
             Tournament.createPlayers(players, utt);
         } catch (Exception e) {
@@ -50,7 +43,7 @@ public class TournamentRunner {
         MatchResultAnalyzer analyzer = new MatchResultAnalyzer(tournamentResults, matchDurations,
                 tournamentResultsSwitched, MAP_PATH);
         analyzer.summarizeTournament();
-        analyzer.exportTournamentResults();
+        // analyzer.exportTournamentResults();
     }
 
 }

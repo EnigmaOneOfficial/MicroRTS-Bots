@@ -42,7 +42,7 @@ public class MatchResultAnalyzer {
     private void exportMatchupResults(String tournamentDirectory) {
         String matchupsFile = String.format("%s/matchups_summary.csv", tournamentDirectory);
         try (FileWriter writer = new FileWriter(matchupsFile)) {
-            writer.write("Player 1,Player 2,Wins,Losses,Draws,Total Duration (ms),Average Duration (ms)\n");
+            writer.write("Player 1,Player 2,Wins,Losses,Draws\n");
             for (Map.Entry<String, Map<String, List<MatchResult>>> entry : tournamentResults.entrySet()) {
                 String player1 = entry.getKey();
                 Map<String, List<MatchResult>> opponentsResults = entry.getValue();
@@ -53,12 +53,7 @@ public class MatchResultAnalyzer {
                     long losses = results.stream().filter(r -> r == MatchResult.LOSE).count();
                     long draws = results.stream().filter(r -> r == MatchResult.DRAW).count();
 
-                    String matchupKey = getMatchupKey(player1, player2);
-                    long totalDuration = matchDurations.getOrDefault(matchupKey, 0L);
-                    double averageDuration = results.size() > 0 ? (double) totalDuration / results.size() : 0;
-
-                    writer.write(String.format("%s,%s,%d,%d,%d,%d,%.2f\n", player1, player2, wins, losses, draws,
-                            totalDuration, averageDuration));
+                    writer.write(String.format("%s,%s,%d,%d,%d\n", player1, player2, wins, losses, draws));
 
                     String matchupsDirectory = String.format("%s/matchups", tournamentDirectory);
                     exportMatchupMatchData(matchupsDirectory, player1, player2, results);
@@ -67,12 +62,6 @@ public class MatchResultAnalyzer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private String getMatchupKey(String player1, String player2) {
-        String[] players = { player1, player2 };
-        Arrays.sort(players);
-        return players[0] + " vs " + players[1];
     }
 
     private void exportMatchupMatchData(String matchupsDirectory, String player1, String player2,
