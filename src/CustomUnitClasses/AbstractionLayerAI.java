@@ -143,7 +143,7 @@ public abstract class AbstractionLayerAI extends AIWithComputationBudget {
     }
 
     public void attack(Unit u, Unit target) {
-        actions.put(u, new Attack(u, target, pf));
+        actions.put(u, new AttackBest(u, target, pf));
     }
 
     public void idle(Unit u) {

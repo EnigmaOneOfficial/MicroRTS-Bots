@@ -1,5 +1,7 @@
 package DameBot;
 
+import java.util.List;
+
 import rts.units.Unit;
 
 public class Light {
@@ -14,6 +16,15 @@ public class Light {
     }
 
     private void assignTask(Unit light) {
+        List<Unit> enemiesWithinAttackRange = bot.findUnitsWithin(bot.units._units, light, light.getAttackRange() + 1);
+
+        if (!enemiesWithinAttackRange.isEmpty()) {
+            Unit closeRanged = bot.findClosest(enemiesWithinAttackRange, light);
+            if (closeRanged != null) {
+                bot.attack(light, closeRanged);
+                return;
+            }
+        }
         bot.attack(light, bot.findClosest(bot.units._units, light));
     }
 }

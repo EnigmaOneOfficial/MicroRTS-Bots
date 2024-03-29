@@ -14,6 +14,11 @@ public class Barracks {
     }
 
     private void assignTask(Unit barrack) {
+        if (bot.player.getResources() >= bot.units.LIGHT.cost
+                && bot.units.light.size() < (bot.units._light.size() > 0 ? bot.units._light.size() / 2 + 2 : 0)) {
+            bot.train(barrack, bot.units.LIGHT);
+            return;
+        }
         if (bot.player.getResources() >= bot.units.RANGED.cost) {
             bot.train(barrack, bot.units.RANGED);
             return;

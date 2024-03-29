@@ -1,5 +1,6 @@
 package DameBot;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +55,7 @@ public class Bot extends AbstractionLayerAI {
     }
 
     public void attackWithMarch(Unit unit) {
-        List<Unit> enemiesInCloseRange = findUnitsWithin(units._units, unit, unit.getAttackRange() + 2);
+        List<Unit> enemiesInCloseRange = findUnitsWithin(units._units, unit, unit.getAttackRange() * 2);
         if (!enemiesInCloseRange.isEmpty()) {
             attack(unit, findEnemyWithLowestHealth(enemiesInCloseRange));
             return;
@@ -86,6 +87,38 @@ public class Bot extends AbstractionLayerAI {
         return findUnitsWithin(units, reference, distance).stream()
                 .min(Comparator.comparingDouble(u -> distance(u, reference)))
                 .orElse(null);
+    }
+
+    public List<Point> calculateRetreatPositions(Unit unit, List<Unit> enemies) {
+        List<Point> retreats = new ArrayList<>();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0)
+                    continue;
+                int newX = unit.getX() + dx;
+                int newY = unit.getY() + dy;
+                if (isValidRetreat(newX, newY)) {
+                    retreats.add(new Point(newX, newY));
+                }
+            }
+        }
+        return retreats;
+    }
+
+    public void retreatOrAttack(Unit unit, List<Unit> enemiesWithinReducedAttackRange,
+            List<Unit> enemiesWithinAttackRange) {
+        List<Point> possibleRetreats = calculateRetreatPositions(unit, enemiesWithinAttackRange);
+        Point bestRetreat = chooseBestRetreat(possibleRetreats, enemiesWithinAttackRange);
+        if (bestRetreat != null) {
+            move(unit, bestRetreat.x, bestRetreat.y);
+        } else {
+            Unit target = findClosest(enemiesWithinAttackRange, unit);
+            if (target != null) {
+                attack(unit, target);
+            } else {
+                attackWithMarch(unit);
+            }
+        }
     }
 
     public Set<String> findAdjacentCells(List<Unit> units) {

@@ -20,7 +20,7 @@ public class Base {
         boolean isBarracksBuilding = bot.units.builders.size() > 0
                 && bot.units.builders.get(0).getUnitActions(bot.game).get(0).getType() == UnitAction.TYPE_PRODUCE;
         List<Unit> enemiesWithinHalfBoard = bot.findUnitsWithin(bot.units._units, base,
-                (int) Math.floor(Math.sqrt(bot.board.getWidth() * bot.board.getHeight()) / 2));
+                (int) Math.floor(Math.sqrt(bot.board.getWidth() * bot.board.getHeight()) / 4));
         boolean shouldTrain = (bot.units.barracks.size() == 0
                 && !isBarracksBuilding && bot.units.workers.size() > 2
                 && enemiesWithinHalfBoard.size() == 0)
@@ -28,7 +28,6 @@ public class Base {
                         : bot.player.getResources() >= bot.units.WORKER.cost;
 
         if (shouldTrain && bot.units.defenders.size() == 0) {
-
             bot.train(base, bot.units.WORKER);
             return;
         }
