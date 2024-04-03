@@ -41,11 +41,11 @@ public class Bot extends AbstractionLayerAI {
                 enemy.getY()) > distance(unit.getX(), unit.getY(), enemy.getX(), enemy.getY()));
     }
 
-    public Point chooseBestRetreat(List<Point> possibleRetreats, List<Unit> enemies) {
+    public Point chooseBestRetreat(List<Point> possibleRetreats, List<Unit> enemies, Unit unit) {
         return possibleRetreats.stream()
                 .min(Comparator.comparingDouble(retreat -> enemies.stream()
                         .mapToDouble(enemy -> potentialDamage(retreat.x, retreat.y, enemy))
-                        .sum()))
+                        .sum() / (unit.getHitPoints() + 1)))
                 .orElse(null);
     }
 
@@ -105,11 +105,12 @@ public class Bot extends AbstractionLayerAI {
         return retreats;
     }
 
-    public void retreatOrAttack(Unit unit, List<Unit> enemiesWithinReducedAttackRange,
+    public void retreatOrAttack(Unit unit,
             List<Unit> enemiesWithinAttackRange) {
         List<Point> possibleRetreats = calculateRetreatPositions(unit, enemiesWithinAttackRange);
-        Point bestRetreat = chooseBestRetreat(possibleRetreats, enemiesWithinAttackRange);
+        Point bestRetreat = chooseBestRetreat(possibleRetreats, enemiesWithinAttackRange, unit);
         if (bestRetreat != null) {
+            System.out.println("Retreating to " + bestRetreat.x + "," + bestRetreat.y);
             move(unit, bestRetreat.x, bestRetreat.y);
         } else {
             Unit target = findClosest(enemiesWithinAttackRange, unit);

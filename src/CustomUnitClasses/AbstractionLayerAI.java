@@ -5,7 +5,6 @@
 package CustomUnitClasses;
 
 import ai.abstraction.AbstractAction;
-import ai.abstraction.Attack;
 import ai.abstraction.Build;
 import ai.abstraction.Harvest;
 import ai.abstraction.Idle;
@@ -140,6 +139,10 @@ public abstract class AbstractionLayerAI extends AIWithComputationBudget {
 
     public void harvest(Unit u, Unit target, Unit base) {
         actions.put(u, new Harvest(u, target, base, pf));
+    }
+
+    public void harvest(Unit u, Unit base) {
+        actions.put(u, new Harvest(u, null, base, pf));
     }
 
     public void attack(Unit u, Unit target) {

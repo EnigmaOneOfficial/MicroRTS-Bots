@@ -38,7 +38,7 @@ public class Ranged {
             bot.attack(ranged, bot.findEnemyWithLowestHealth(enemyWorkerUnitsWithinAttackRange));
         } else if (!enemiesWithinReducedAttackRange.isEmpty()) {
             // Retreat, only attacking if necessary
-            bot.retreatOrAttack(ranged, enemiesWithinReducedAttackRange, enemiesWithinAttackRange);
+            bot.retreatOrAttack(ranged, enemiesWithinAttackRange);
         } else if (!enemiesWithinAttackRange.isEmpty()) {
             bot.attack(ranged, bot.findEnemyWithLowestHealth(enemiesWithinAttackRange));
         } else {

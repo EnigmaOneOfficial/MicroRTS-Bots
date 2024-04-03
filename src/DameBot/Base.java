@@ -1,6 +1,7 @@
 package DameBot;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import rts.UnitAction;
 import rts.units.Unit;
@@ -17,19 +18,14 @@ public class Base {
     }
 
     private void assignTask(Unit base) {
-        boolean isBarracksBuilding = bot.units.builders.size() > 0
-                && bot.units.builders.get(0).getUnitActions(bot.game).get(0).getType() == UnitAction.TYPE_PRODUCE;
-        List<Unit> enemiesWithinHalfBoard = bot.findUnitsWithin(bot.units._units, base,
-                (int) Math.floor(Math.sqrt(bot.board.getWidth() * bot.board.getHeight()) / 4));
-        boolean shouldTrain = (bot.units.barracks.size() == 0
-                && !isBarracksBuilding && bot.units.workers.size() > 2
-                && enemiesWithinHalfBoard.size() == 0)
-                        ? bot.player.getResources() >= bot.units.BARRACKS.cost + bot.units.WORKER.cost
-                        : bot.player.getResources() >= bot.units.WORKER.cost;
+        List<Unit> closeResources = bot.findUnitsWithin(bot.units.resources, base, 8);
+        boolean shouldTrain = bot.units.barracks.isEmpty()
+                ? bot.player.getResources() >= bot.units.BARRACKS.cost
+                : bot.player.getResources() >= bot.units.WORKER.cost;
 
-        if (shouldTrain && bot.units.defenders.size() == 0) {
+        if (shouldTrain && bot.units.workers.size() <= closeResources.size()) {
             bot.train(base, bot.units.WORKER);
-            return;
         }
     }
+
 }
