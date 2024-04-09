@@ -1,10 +1,6 @@
 package DameBot;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import rts.UnitAction;
 import rts.units.Unit;
 
 public class Worker {
@@ -34,16 +30,17 @@ public class Worker {
 
     private void assignTask(Unit worker) {
         // Action 1: Attack a nearby enemy - non interrupting
-        List<Unit> enemies = bot.findUnitsWithin(bot.units._units, worker, worker.getAttackRange());
-        if (!enemies.isEmpty()) {
-            System.out.println("Worker " + worker.getID() + " is attacking");
-            bot.attack(worker, bot.findEnemyWithLowestHealth(enemies));
+        List<Unit> enemies = bot.findUnitsWithin(bot.units._units, worker, worker.getAttackRange() + 1);
+        Unit closestBase = bot.findClosest(bot.units.bases, worker);
+        if (!enemies.isEmpty() || closestBase == null) {
+            bot.log("Worker " + worker.getID() + " is attacking");
+            bot.attack(worker, bot.findClosest(enemies, worker));
             return;
         }
         // Action 2: Return resources - non interrupting
         if (worker.getResources() > 0 && bot.units.bases.size() > 0) {
-            System.out.println("Worker " + worker.getID() + " is returning resources");
-            bot.harvest(worker, bot.units.bases.get(0));
+            bot.log("Worker " + worker.getID() + " is returning resources");
+            bot.harvest(worker, closestBase);
             return;
         }
 
@@ -55,28 +52,33 @@ public class Worker {
                 && bot.units._bases.size() > 0
                 && bot.player.getResources() >= bot.units.BARRACKS.cost + bot.units.WORKER.cost) &&
                 (bot.units.builders.isEmpty() || bot.units.builders.contains(worker))) {
-            System.out.println("Worker " + worker.getID() + " is building a barracks");
+            bot.log("Worker " + worker.getID() + " is building a barracks");
             bot.units.harvesters.remove(worker);
             bot.units.defenders.remove(worker);
             if (!bot.units.builders.contains(worker))
                 bot.units.builders.add(worker);
-            Unit base = bot.units.bases.get(0);
-            Unit enemyBase = bot.units._bases.get(0);
-            int[] buildCoordinates = calculateBarracksCoordinates(base, enemyBase);
+            Unit closestEnemy = bot.findClosest(bot.units._units, worker);
+            int[] buildCoordinates = calculateBarracksCoordinates(closestBase, closestEnemy);
             bot.build(worker, bot.units.BARRACKS, buildCoordinates[0], buildCoordinates[1]);
             return;
         }
 
         // Action 4: Harvest resources
-        if (bot.units.resources.size() > 0 && bot.units.bases.size() > 0) {
-            List<Unit> closeResources = bot.findUnitsWithin(bot.units.resources, bot.units.bases.get(0), 8);
-            if (bot.units.harvesters.size() < closeResources.size() + 1 || bot.units.harvesters.contains(worker)) {
+        List<Unit> closeResources = bot.findUnitsWithin(bot.units.resources, worker,
+                (int) Math.hypot(bot.board.getWidth(), bot.board.getHeight()) / 3);
+        if (closeResources.size() > 0 && bot.units.bases.size() > 0) {
+            if (bot.units.harvesters.size() <= closeResources.size() || bot.units.harvesters.contains(worker)) {
                 bot.units.builders.remove(worker);
                 bot.units.defenders.remove(worker);
                 if (!bot.units.harvesters.contains(worker))
                     bot.units.harvesters.add(worker);
-                System.out.println("Worker " + worker.getID() + " is harvesting");
-                bot.harvest(worker, bot.findClosest(bot.units.resources, worker), bot.units.bases.get(0));
+                bot.log("Worker " + worker.getID() + " is harvesting");
+
+                Unit chosenResource = bot.findClosest(closeResources, worker);
+
+                // Harvest a resource where a pathfinding path exists
+
+                bot.harvest(worker, chosenResource, closestBase);
                 return;
             }
         }
@@ -86,16 +88,14 @@ public class Worker {
         bot.units.builders.remove(worker);
         if (!bot.units.defenders.contains(worker))
             bot.units.defenders.add(worker);
-        bot.attackWithMarch(worker);
-        System.out.println("Worker " + worker.getID() + " is defending");
-
+        bot.attack(worker, bot.findClosest(bot.units._units, worker));
     }
 
     private int[] calculateBarracksCoordinates(Unit base, Unit enemyBase) {
         int buildX = base.getX();
         int buildY = base.getY();
-        buildX += (enemyBase.getX() > base.getX()) ? 1 : -1;
-        buildY += (enemyBase.getY() > base.getY()) ? -2 : 2;
+        buildX += (enemyBase.getX() > base.getX()) ? 2 : -2;
+        buildY += (enemyBase.getY() > base.getY()) ? -1 : 1;
         buildX = Math.max(0, Math.min(buildX, bot.board.getWidth() - 1));
         buildY = Math.max(0, Math.min(buildY, bot.board.getHeight() - 1));
         return new int[] { buildX, buildY };

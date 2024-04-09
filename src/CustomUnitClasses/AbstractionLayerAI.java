@@ -130,7 +130,12 @@ public abstract class AbstractionLayerAI extends AIWithComputationBudget {
     }
 
     public void train(Unit u, UnitType unit_type) {
+        if (unit_type.name == "Worker") {
+            actions.put(u, new TrainBestDirectionW(u, unit_type));
+            return;
+        }
         actions.put(u, new TrainBestDirection(u, unit_type));
+
     }
 
     public void build(Unit u, UnitType unit_type, int x, int y) {

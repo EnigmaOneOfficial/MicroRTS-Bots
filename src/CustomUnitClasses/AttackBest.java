@@ -42,7 +42,7 @@ public class AttackBest extends AbstractAction {
 
         double dx = target.getX() - getUnit().getX();
         double dy = target.getY() - getUnit().getY();
-        double d = Math.sqrt(dx * dx + dy * dy);
+        double d = Math.hypot(dx, dy);
         UnitAction action = new UnitAction(UnitAction.TYPE_ATTACK_LOCATION, target.getX(), target.getY());
         if (d <= getUnit().getAttackRange() && gs.isUnitActionAllowed(getUnit(),
                 action)) {

@@ -1,6 +1,5 @@
 package DameBot;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import CustomUnitClasses.AbstractionLayerAI;
-import ai.abstraction.pathfinding.AStarPathFinding;
+import CustomUnitClasses.DameStarPathFinding;
 import ai.abstraction.pathfinding.PathFinding;
 import ai.core.AI;
 import ai.core.ParameterSpecification;
@@ -25,53 +24,12 @@ public class Bot extends AbstractionLayerAI {
     public GameState game;
     public PhysicalGameState board;
     public Units units;
+    public DameStarPathFinding pf;
+    public boolean debug = false;
 
-    public Unit findEnemyWithLowestHealth(List<Unit> enemies) {
-        return enemies.stream()
-                .min(Comparator.comparingInt(Unit::getHitPoints))
-                .orElse(null);
-    }
-
-    public boolean isValidRetreat(int x, int y) {
-        return x >= 0 && x < board.getWidth() && y >= 0 && y < board.getHeight() && game.free(x, y);
-    }
-
-    public boolean isMovingAwayFromEnemies(int newX, int newY, Unit unit, List<Unit> enemies) {
-        return enemies.stream().allMatch(enemy -> distance(newX, newY, enemy.getX(),
-                enemy.getY()) > distance(unit.getX(), unit.getY(), enemy.getX(), enemy.getY()));
-    }
-
-    public Point chooseBestRetreat(List<Point> possibleRetreats, List<Unit> enemies, Unit unit) {
-        return possibleRetreats.stream()
-                .min(Comparator.comparingDouble(retreat -> enemies.stream()
-                        .mapToDouble(enemy -> potentialDamage(retreat.x, retreat.y, enemy))
-                        .sum() / (unit.getHitPoints() + 1)))
-                .orElse(null);
-    }
-
-    public double potentialDamage(int x, int y, Unit enemy) {
-        double distance = distance(x, y, enemy.getX(), enemy.getY());
-        return (distance <= enemy.getAttackRange()) ? enemy.getMinDamage() : 0;
-    }
-
-    public void attackWithMarch(Unit unit) {
-        List<Unit> enemiesInCloseRange = findUnitsWithin(units._units, unit, unit.getAttackRange() * 2);
-        if (!enemiesInCloseRange.isEmpty()) {
-            attack(unit, findEnemyWithLowestHealth(enemiesInCloseRange));
-            return;
-        }
-
-        Unit enemyBase = findEnemyWithLowestHealth(units._bases);
-        Unit enemyBarracks = findEnemyWithLowestHealth(units._barracks);
-
-        if (enemyBase != null && enemyBarracks != null) {
-            if (enemyBase.getHitPoints() < enemyBarracks.getHitPoints()) {
-                attack(unit, enemyBase);
-            } else {
-                attack(unit, enemyBarracks);
-            }
-        } else {
-            attack(unit, findEnemyWithLowestHealth(units._units));
+    public void log(String message) {
+        if (debug) {
+            System.out.println(message);
         }
     }
 
@@ -87,39 +45,6 @@ public class Bot extends AbstractionLayerAI {
         return findUnitsWithin(units, reference, distance).stream()
                 .min(Comparator.comparingDouble(u -> distance(u, reference)))
                 .orElse(null);
-    }
-
-    public List<Point> calculateRetreatPositions(Unit unit, List<Unit> enemies) {
-        List<Point> retreats = new ArrayList<>();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if (dx == 0 && dy == 0)
-                    continue;
-                int newX = unit.getX() + dx;
-                int newY = unit.getY() + dy;
-                if (isValidRetreat(newX, newY)) {
-                    retreats.add(new Point(newX, newY));
-                }
-            }
-        }
-        return retreats;
-    }
-
-    public void retreatOrAttack(Unit unit,
-            List<Unit> enemiesWithinAttackRange) {
-        List<Point> possibleRetreats = calculateRetreatPositions(unit, enemiesWithinAttackRange);
-        Point bestRetreat = chooseBestRetreat(possibleRetreats, enemiesWithinAttackRange, unit);
-        if (bestRetreat != null) {
-            System.out.println("Retreating to " + bestRetreat.x + "," + bestRetreat.y);
-            move(unit, bestRetreat.x, bestRetreat.y);
-        } else {
-            Unit target = findClosest(enemiesWithinAttackRange, unit);
-            if (target != null) {
-                attack(unit, target);
-            } else {
-                attackWithMarch(unit);
-            }
-        }
     }
 
     public Set<String> findAdjacentCells(List<Unit> units) {
@@ -141,16 +66,24 @@ public class Bot extends AbstractionLayerAI {
         return cells;
     }
 
+    public boolean isOccupied(int x, int y) {
+        return units._units.stream().anyMatch(u -> u.getX() == x && u.getY() == y);
+    }
+
     public boolean isWithinBoard(int x, int y) {
         return x >= 0 && x < board.getWidth() && y >= 0 && y < board.getHeight();
     }
 
-    public double distance(Unit u1, Unit u2) {
+    public int distance(Unit u1, Unit u2) {
         return distance(u1.getX(), u1.getY(), u2.getX(), u2.getY());
     }
 
-    public double distance(int x1, int y1, int x2, int y2) {
-        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    public int distance(int x1, int y1, int x2, int y2) {
+        return (int) Math.hypot(x2 - x1, y2 - y1);
+    }
+
+    public int distance(int pos1, int pos2) {
+        return Math.abs(pos2 - pos1);
     }
 
     @Override
@@ -173,13 +106,27 @@ public class Bot extends AbstractionLayerAI {
     }
 
     public Bot(UnitTypeTable unitTypeTable) {
-        this(unitTypeTable, new AStarPathFinding());
+        this(unitTypeTable, new DameStarPathFinding());
+    }
+
+    public Bot(UnitTypeTable unitTypeTable, boolean debug) {
+        this(unitTypeTable, new DameStarPathFinding(), debug);
+        this.debug = debug;
+    }
+
+    public Bot(UnitTypeTable unitTypeTable, PathFinding pf, boolean debug) {
+        super(pf);
+        this.unitTypeTable = unitTypeTable;
+        this.units = new Units(unitTypeTable);
+        this.debug = debug;
+        this.pf = (DameStarPathFinding) pf;
     }
 
     public Bot(UnitTypeTable unitTypeTable, PathFinding pf) {
         super(pf);
         this.unitTypeTable = unitTypeTable;
         this.units = new Units(unitTypeTable);
+        this.pf = (DameStarPathFinding) pf;
     }
 
     @Override

@@ -1,49 +1,88 @@
 package tournament;
 
 import java.util.*;
-
 import ai.core.AI;
-import rts.units.UnitTypeTable;
 
 public class TournamentRunner {
-
-    private static List<AI> players = new ArrayList<>();
-    private static UnitTypeTable utt = new UnitTypeTable();
-
-    public static void runTournament(String MAP_PATH, int MAX_CYCLES, int UPDATE_PERIOD, int WINDOW_SIZE,
-            boolean DISPOSE_WINDOW, boolean CHECK_FOR_ADVANTAGE, int MAX_DURATION_PER_MATCHUP, boolean VISUALIZE,
-            int SIMULATIONS) {
+    public static void runTournament(TournamentConfig config) {
+        List<AI> players;
         try {
-            Tournament.createPlayers(players, utt);
+            players = Tournament.getBots(config);
         } catch (Exception e) {
             e.printStackTrace();
             return;
         }
-
         if (players.size() < 2) {
             System.out.println("There must be at least two players to run a tournament.");
             return;
         }
 
-        Map<String, Map<String, List<MatchResult>>> tournamentResults = new HashMap<>();
-        Map<String, Map<String, List<MatchResult>>> tournamentResultsSwitched = new HashMap<>();
-        List<Integer> gameCycles = new ArrayList<>();
-        Map<String, Long> matchDurations = new HashMap<>();
+        TournamentResults results = new TournamentResults();
+        MatchResultAnalyzer analyzer = new MatchResultAnalyzer(results, config, System.currentTimeMillis());
 
-        MatchRunner match = new MatchRunner(utt, MAX_CYCLES, UPDATE_PERIOD, WINDOW_SIZE, DISPOSE_WINDOW,
-                CHECK_FOR_ADVANTAGE, MAX_DURATION_PER_MATCHUP, VISUALIZE, SIMULATIONS, MAP_PATH);
-
-        for (int i = 0; i < players.size(); i++) {
-            for (int j = i + 1; j < players.size(); j++) {
-                match.runMatches(i, j, players, tournamentResults, tournamentResultsSwitched, gameCycles,
-                        matchDurations);
+        for (String map : config.getMaps()) {
+            MatchRunner match = new MatchRunner(config, map, analyzer);
+            if (config.getType() == TournamentType.ROUND_ROBIN) {
+                runRoundRobin(match, players, results, map);
+            } else if (config.getType() == TournamentType.BRACKET) {
+                runBracket(match, players, results, map);
             }
         }
-
-        MatchResultAnalyzer analyzer = new MatchResultAnalyzer(tournamentResults, matchDurations,
-                tournamentResultsSwitched, MAP_PATH);
-        analyzer.summarizeTournament();
-        // analyzer.exportTournamentResults();
+        analyzer.printSummary();
     }
 
+    private static void runRoundRobin(MatchRunner match, List<AI> players, TournamentResults results, String map) {
+        for (int i = 0; i < players.size(); i++) {
+            for (int j = i + 1; j < players.size(); j++) {
+                match.runMatches(i, j, players, results);
+            }
+        }
+    }
+
+    private static void runBracket(MatchRunner match, List<AI> players, TournamentResults results, String map) {
+        List<AI> remaining = new ArrayList<>(players);
+        int round = 1;
+
+        while (remaining.size() > 1) {
+            List<AI> winners = new ArrayList<>();
+
+            System.out.println("Round " + round + ":");
+
+            for (int i = 0; i < remaining.size(); i += 2) {
+                AI p1 = remaining.get(i);
+                AI p2 = (i + 1 < remaining.size()) ? remaining.get(i + 1) : null;
+
+                if (p2 != null) {
+                    int p1Index = players.indexOf(p1);
+                    int p2Index = players.indexOf(p2);
+
+                    match.runMatches(p1Index, p2Index, players, results);
+
+                    String p1Name = p1.getClass().getSimpleName();
+                    String p2Name = p2.getClass().getSimpleName();
+                    int winner = results.determineWinner(map, p1Name, p2Name);
+
+                    if (winner == 0) {
+                        winners.add(p1);
+                        System.out.println(p1Name + " wins against " + p2Name);
+                    } else if (winner == 1) {
+                        winners.add(p2);
+                        System.out.println(p2Name + " wins against " + p1Name);
+                    } else {
+                        winners.add(p1);
+                        System.out.println(p1Name + " and " + p2Name + " draw");
+                    }
+                } else {
+                    winners.add(p1);
+                    System.out.println(p1.getClass().getSimpleName() + " gets a bye");
+                }
+            }
+
+            remaining = winners;
+            round++;
+            System.out.println();
+        }
+
+        System.out.println("Tournament winner: " + remaining.get(0).getClass().getSimpleName());
+    }
 }
