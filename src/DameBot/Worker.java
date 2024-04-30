@@ -50,8 +50,8 @@ public class Worker {
         }
         if ((bot.units.barracks.isEmpty() && bot.units.bases.size() > 0
                 && bot.units._bases.size() > 0
-                && bot.player.getResources() >= bot.units.BARRACKS.cost + bot.units.WORKER.cost) &&
-                (bot.units.builders.isEmpty() || bot.units.builders.contains(worker))) {
+                && bot.player.getResources() >= bot.units.BARRACKS.cost + bot.units.WORKER.cost)
+                && (bot.units.builders.isEmpty() || bot.units.builders.contains(worker))) {
             bot.log("Worker " + worker.getID() + " is building a barracks");
             bot.units.harvesters.remove(worker);
             bot.units.defenders.remove(worker);
@@ -65,8 +65,8 @@ public class Worker {
 
         // Action 4: Harvest resources
         List<Unit> closeResources = bot.findUnitsWithin(bot.units.resources, worker,
-                (int) Math.hypot(bot.board.getWidth(), bot.board.getHeight()) / 3);
-        if (closeResources.size() > 0 && bot.units.bases.size() > 0) {
+                (int) Math.hypot(bot.board.getWidth(), bot.board.getHeight()) / 2);
+        if (closeResources.size() > 0 && bot.units.bases.size() > 0 && !bot.units.defenders.contains(worker)) {
             if (bot.units.harvesters.size() <= closeResources.size() || bot.units.harvesters.contains(worker)) {
                 bot.units.builders.remove(worker);
                 bot.units.defenders.remove(worker);
@@ -75,8 +75,6 @@ public class Worker {
                 bot.log("Worker " + worker.getID() + " is harvesting");
 
                 Unit chosenResource = bot.findClosest(closeResources, worker);
-
-                // Harvest a resource where a pathfinding path exists
 
                 bot.harvest(worker, chosenResource, closestBase);
                 return;
@@ -88,13 +86,56 @@ public class Worker {
         bot.units.builders.remove(worker);
         if (!bot.units.defenders.contains(worker))
             bot.units.defenders.add(worker);
-        bot.attack(worker, bot.findClosest(bot.units._units, worker));
+
+        bot.log("Worker " + worker.getID() + " is defending");
+        List<Unit> heavies = bot.findUnitsWithin(bot.units._heavy, worker, 6);
+        List<Unit> ranged = bot.findUnitsWithin(bot.units._ranged, worker, 6);
+        Unit closestEnemyBase = bot.findClosest(bot.units._bases, worker);
+        Unit closestBarracks = bot.findClosest(bot.units._barracks, worker);
+        Unit closestEnemy = bot.findClosest(bot.units._units, worker);
+
+        if (Math.ceil(bot.distance(worker, closestEnemy)) == 1) {
+            bot.attack(worker, closestEnemy);
+            return;
+        }
+
+        if (!heavies.isEmpty()) {
+            int[] furthestCell = bot.findFurthestAdjacentCell(worker,
+                    bot.nextEnemyPos(bot.findClosest(heavies, worker)));
+            if (Math.ceil(bot.distance(worker, furthestCell)) == Math.ceil(bot.distance(worker, closestEnemy))) {
+                bot.attack(worker, bot.findClosest(heavies, worker));
+                return;
+            }
+            bot.move(worker, furthestCell[0], furthestCell[1]);
+            return;
+        }
+
+        if (!ranged.isEmpty()) {
+            int[] furthestCell = bot.findFurthestAdjacentCell(worker,
+                    bot.nextEnemyPos(bot.findClosest(ranged, worker)));
+            if (Math.ceil(bot.distance(worker, furthestCell)) <= worker.getAttackRange() + 1) {
+                bot.attack(worker, bot.findClosest(ranged, worker));
+                return;
+            }
+            bot.move(worker, furthestCell[0], furthestCell[1]);
+            return;
+        }
+
+        if (closestEnemy != null && closestEnemy.getType() == bot.units.WORKER) {
+            bot.attack(worker, closestEnemy);
+        } else if (closestEnemyBase != null) {
+            bot.attack(worker, closestEnemyBase);
+        } else if (closestBarracks != null) {
+            bot.attack(worker, closestBarracks);
+        } else if (closestEnemy != null) {
+            bot.attack(worker, closestEnemy);
+        }
     }
 
     private int[] calculateBarracksCoordinates(Unit base, Unit enemyBase) {
         int buildX = base.getX();
         int buildY = base.getY();
-        buildX += (enemyBase.getX() > base.getX()) ? 2 : -2;
+        buildX += (enemyBase.getX() > base.getX()) ? 1 : -1;
         buildY += (enemyBase.getY() > base.getY()) ? -1 : 1;
         buildX = Math.max(0, Math.min(buildX, bot.board.getWidth() - 1));
         buildY = Math.max(0, Math.min(buildY, bot.board.getHeight() - 1));

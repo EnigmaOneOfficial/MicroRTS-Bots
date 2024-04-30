@@ -14,6 +14,7 @@ public class Heavy {
     }
 
     private void assignTask(Unit heavy) {
-        bot.attack(heavy, bot.findClosest(bot.units._units, heavy));
+        Unit closestEnemy = bot.findClosest(bot.units._units, heavy);
+        bot.attack(heavy, closestEnemy);
     }
 }

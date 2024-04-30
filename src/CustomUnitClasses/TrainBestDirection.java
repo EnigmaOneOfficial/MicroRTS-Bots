@@ -112,7 +112,7 @@ public class TrainBestDirection extends AbstractAction {
         }
         if (ownBase != null) {
             int distanceToOwnBase = Math.abs(ownBase.getX() - x) + Math.abs(ownBase.getY() - y);
-            score += 2 * distanceToOwnBase;
+            score += distanceToOwnBase;
         }
         return score;
     }

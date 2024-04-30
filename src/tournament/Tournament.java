@@ -33,23 +33,23 @@ public class Tournament {
         UnitTypeTable utt = config.getUtt();
 
         // Testing Bots:
-        players.add(new WorkerRush(utt));
-        players.add(new PassiveAI(utt));
-        players.add(new RandomAI(utt));
-        players.add(new CoacAI(utt));
-        players.add(new mayari(utt));
+        // players.add(new WorkerRush(utt));
+        // players.add(new PassiveAI(utt));
+        // players.add(new RandomAI(utt));
+        // players.add(new CoacAI(utt));
+        // players.add(new mayari(utt));
 
         // Student Bots:
         // players.add(new BaluBot(utt));
         // players.add(new BradyBot(utt));
-        // players.add(new DameBot(utt));
+        players.add(new DameBot(utt));
         // players.add(new DinkleBot(utt));
         // players.add(new HSBot(utt));
         // players.add(new KalebBot(utt));
         // players.add(new LasyaBot(utt));
         // players.add(new MyBot(utt));
         // players.add(new nickBot(utt));
-        // players.add(new RangedRushImproved(utt));
+        players.add(new RangedRushImproved(utt));
         // players.add(new RitsBot(utt));
         // players.add(new sspringer_mcts_bot(utt));
         // players.add(new SwagBot(utt));
@@ -60,15 +60,15 @@ public class Tournament {
     public static void main(String[] args) {
         TournamentConfig config = new TournamentConfig();
 
-        // config.setMaps(new String[] { "maps/32x32/basesWorkers32x32.xml" });
+        // config.setMaps(new String[] { "maps/16x16/basesWorkers16x16.xml" });
         // config.setMaxCycles(10000);
-        // config.setUpdatePeriod(50);
+        // config.setUpdatePeriod(15);
         // config.setWindowSize(1600);
         // config.setDisposeWindow(false);
-        // config.setCheckAdvantage(true);
+        // config.setCheckAdvantage(false);
         // config.setMaxDuration(120000);
         // config.setVisible(true);
-        // config.setSimulations(5);
+        // config.setSimulations(10);
         // config.setTimeBudget(5);
         // config.setType(TournamentType.BRACKET);
 

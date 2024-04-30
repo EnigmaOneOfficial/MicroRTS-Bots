@@ -14,15 +14,20 @@ public class Barracks {
     }
 
     private void assignTask(Unit barrack) {
-        if (bot.player.getResources() >= bot.units.HEAVY.cost
-                && bot.units.heavy.size() < (bot.units._heavy.size() > 1 ? bot.units._heavy.size() - 1 : 0)) {
-            bot.train(barrack, bot.units.HEAVY);
+        Unit closestEnemyBase = bot.findClosest(bot.units._bases, barrack);
+        if (bot.player.getResources() >= bot.units.LIGHT.cost
+                && closestEnemyBase != null
+                && bot.units.light.size() < (bot.units._light.size() >= 1 ? bot.units._light.size()
+                        : bot.units._ranged.size() >= 1 ? Math.ceil(bot.units._ranged.size() / 2)
+                                : bot.distance(barrack, closestEnemyBase) < 16 ? 1 : 1)) {
+            bot.train(barrack, bot.units.LIGHT);
             return;
         }
-        if (bot.player.getResources() >= bot.units.LIGHT.cost
-                && bot.units._heavy.size() == 0
-                && bot.units.light.size() < (bot.units._light.size() > 1 ? bot.units._light.size() - 1 : 0)) {
-            bot.train(barrack, bot.units.LIGHT);
+        if (bot.player.getResources() >= bot.units.HEAVY.cost
+                && bot.units.heavy
+                        .size() < (bot.units._heavy.size() > 1 ? Math.floor(bot.units._heavy.size() / 2) : 1)
+                && bot.units._ranged.size() == 0) {
+            bot.train(barrack, bot.units.HEAVY);
             return;
         }
         if (bot.player.getResources() >= bot.units.RANGED.cost) {

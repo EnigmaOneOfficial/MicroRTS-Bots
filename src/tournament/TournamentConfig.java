@@ -13,7 +13,7 @@ public class TournamentConfig {
     private int windowSize = 800;
     private boolean disposeWindow = true;
     private boolean checkAdvantage = true;
-    private int maxDuration = 1800000;
+    private int maxDuration = 3600000;
     private boolean visible = false;
     private int simulations = 1;
     private int timeBudget = 10;
