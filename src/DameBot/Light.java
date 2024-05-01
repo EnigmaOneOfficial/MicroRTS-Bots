@@ -26,13 +26,13 @@ public class Light {
         Unit priorityTarget = closestBase != null ? closestBase
                 : closestBarracks != null ? closestBarracks : closestEnemy;
 
-        if (Math.ceil(bot.distance(light, closestEnemy)) == light.getAttackRange()) {
+        if (Math.ceil(bot.distance(light, closestEnemy)) <= light.getAttackRange() + 1) {
             bot.attack(light, closestEnemy);
             return;
         }
 
         // Avoid ranged
-        if (!ranged.isEmpty()) {
+        if (!ranged.isEmpty() && bot.units._ranged.size() > 1) {
             int[] furthestCell = bot.findFurthestAdjacentCell(light, ranged);
             if (Math.ceil(bot.distance(light, furthestCell)) <= light.getAttackRange()) {
                 bot.move(light, furthestCell[0], furthestCell[1]);

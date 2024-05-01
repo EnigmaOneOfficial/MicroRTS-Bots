@@ -25,7 +25,9 @@ public class Barracks {
         }
         if (bot.player.getResources() >= bot.units.HEAVY.cost
                 && bot.units.heavy
-                        .size() < (bot.units._heavy.size() > 1 ? Math.floor(bot.units._heavy.size() / 2) : 1)
+                        .size() < (bot.units._heavy.size() > 1
+                                ? Math.floor(bot.units._heavy.size() / 2)
+                                : bot.units._light.size() > 1 ? Math.floor(bot.units._light.size() / 2) : 0)
                 && bot.units._ranged.size() == 0) {
             bot.train(barrack, bot.units.HEAVY);
             return;
